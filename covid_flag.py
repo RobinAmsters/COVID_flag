@@ -24,12 +24,11 @@ import copy
 inhabitants = 11492641  # https://statbel.fgov.be/nl/themas/bevolking/structuur-van-de-bevolking
 FPS = 1
 font = cv2.FONT_HERSHEY_SIMPLEX
-dates_to_process = 5 # Number of data entries to process for testing
+dates_to_process = 25 # Number of data entries to process for testing, set to false for all
 
 # Load data
-data = pd.read_excel('data/COVID19BE.xlsx', sheet_name="CASES_AGESEX", index_col="DATE") # Load test file with few rows for easier testing for now
-flag_orig = cv2.imread("data/Flag_of_Belgium.png")
-# flag_orig = cv2.cvtColor(flag_orig, cv2.COLOR_BGR2RGB) # For use in matplotlib
+data = pd.read_excel('data/COVID19BE.xlsx', sheet_name="CASES_AGESEX", index_col="DATE")
+flag_orig = cv2.imread("data/Flag_of_Belgium.png") # flag_orig = cv2.cvtColor(flag_orig, cv2.COLOR_BGR2RGB) # For use in matplotlib
 height, width = flag_orig.shape[:2]
 
 # Format data
@@ -38,34 +37,47 @@ data = data.groupby(["DATE"]).sum() # Get total number of cases per day, groups 
 data_cum = data["CASES"].cumsum() # Get cumulative number of cases per day
 total_cases = data_cum[-1] # Total number of cases in Belgium so far
 
-# Start video writier
+# Start video writer
 fourcc = cv2.VideoWriter_fourcc(*'MP42')
 video = cv2.VideoWriter('results/flag_cases.avi', fourcc, float(FPS), (width, height))
 
-
+# Loop over all dates and create frame for every entry
 scaling = flag_orig.size/total_cases # Remove pixels relative to population
-removed_pixels_x = np.array([], dtype=int) # 10*flag_orig.size*np.ones(2,flag_orig.size) # initialize indexes as large number, to be overrided later
-removed_pixels_y = np.array([], dtype=int)
-for date in data_cum.keys()[0:dates_to_process]: # Loop over all dates and create frame for every entry
+removed_pixels_x = np.array([], dtype=int) # x-coordinates of pixels to be removed in the current frame
+removed_pixels_y = np.array([], dtype=int) # y-coordinates of pixels to be removed in the current frame
+for date in data_cum.keys()[0:dates_to_process]:
     print("Processing day: " + date)
     flag = copy.deepcopy(flag_orig)
 
     # Determine which pixels to remove, while keeping track of pixels already removed
-    pixels_to_remove = True
-    while pixels_to_remove:
+    pixels_to_remove = int(data_cum[date]/scaling)
+    pixels_x = np.array([], dtype=int)
+    pixels_y = np.array([], dtype=int)
+    while pixels_to_remove > 0:
 
-        # Randomly select pixels to remove
-        pixels_x = np.random.uniform(0, width, int(data_cum[date]/scaling)).astype(int)
-        pixels_y = np.random.uniform(0, height, int(data_cum[date]/scaling)).astype(int)
+        # Randomly select pixels to remove, based on how many are still left
+        pixels_x_i = np.random.uniform(0, width, pixels_to_remove).astype(int)
+        pixels_y_i = np.random.uniform(0, height, pixels_to_remove).astype(int)
 
         # Check if these pixels have been removed before
-        x_true = pd.Series(removed_pixels_x).isin(pixels_x) #TODO find beter var name
-        y_true = pd.Series(removed_pixels_y).isin(pixels_y)
+        x_true = pd.Series(removed_pixels_x).isin(pixels_x_i) #TODO find beter var name
+        y_true = pd.Series(removed_pixels_y).isin(pixels_y_i)
 
         if (x_true.any() and y_true.any):
-            pass # Keep trying, very inefficient
+            n_duplicate = len(np.where(x_true)) # Number of duplicate entries, need to resample these
+            index_x_duplicate = np.where(x_true)
+            index_y_duplicate = np.where(y_true)
+
+            # TODO find which pixels are okay, and which should still be removed
+            pixels_to_remove = n_duplicate # Keep trying, very inefficient
+            print("Duplicate pixles left: ", pixels_to_remove)
+            pixels_x = np.append(pixels_x, pixels_x_i)
+            pixels_y = np.append(pixels_y, pixels_y_i)
+
         else:
-            pixels_to_remove = False
+            pixels_x = np.append(pixels_x, pixels_x_i)
+            pixels_y = np.append(pixels_y, pixels_y_i)
+            pixels_to_remove = 0
 
     # Keep track of removed pixels
     removed_pixels_x = np.append(removed_pixels_x, pixels_x)
@@ -77,3 +89,4 @@ for date in data_cum.keys()[0:dates_to_process]: # Loop over all dates and creat
     video.write(frame)
 
 video.release()
+print("Done")
