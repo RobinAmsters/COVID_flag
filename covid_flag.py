@@ -11,6 +11,8 @@
 # TODO animation per day
 # TODO Figure out resolution, maybe make 1 pixel per inhabitant. Alternatively scale the pixels that are removed in proportion to the toal inhabitants
 
+# TODO SCALING IS FUCKED, come back later after vaccination flag works
+
 # Idea: start from empty and make a flag of vaccinated ppl
 # Idea make it relative to the belgian map
 
@@ -30,6 +32,8 @@ dates_to_process = 25 # Number of data entries to process for testing, set to fa
 data = pd.read_excel('data/COVID19BE.xlsx', sheet_name="CASES_AGESEX", index_col="DATE")
 flag_orig = cv2.imread("data/Flag_of_Belgium.png") # flag_orig = cv2.cvtColor(flag_orig, cv2.COLOR_BGR2RGB) # For use in matplotlib
 height, width = flag_orig.shape[:2]
+n_pixels = height*width
+
 
 # Format data
 data = data.dropna() # Drop final nan entries
@@ -42,7 +46,7 @@ fourcc = cv2.VideoWriter_fourcc(*'MP42')
 video = cv2.VideoWriter('results/flag_cases.avi', fourcc, float(FPS), (width, height))
 
 # Loop over all dates and create frame for every entry
-scaling = flag_orig.size/total_cases # Remove pixels relative to population
+scaling = n_pixels/total_cases # Remove pixels relative to population
 removed_pixels_x = np.array([], dtype=int) # x-coordinates of pixels to be removed in the current frame
 removed_pixels_y = np.array([], dtype=int) # y-coordinates of pixels to be removed in the current frame
 for date in data_cum.keys()[0:dates_to_process]:
