@@ -74,10 +74,6 @@ flag_vaccination[:, :] = (255, 255, 255) # All white pixels of the right size
 flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # opencv images have y,x index for some reason
 final_date = data['Datum'][len(data['Datum'])-1]
 flag_vaccination = cv2.putText(flag_vaccination, final_date, (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture
-
-flag_vaccination[1000, 100] = (255, 0, 0)
-flag_vaccination = cv2.putText(flag_vaccination, "Pixel voor jolien", (100+10, 1000), font, 1, (255, 0, 0), 2, cv2.LINE_AA)  # Add date to picture
-
 cv2.imshow("Vaccination flag", flag_vaccination)
 
 # Save results
