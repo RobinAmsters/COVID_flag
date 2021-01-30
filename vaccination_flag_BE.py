@@ -1,17 +1,13 @@
-#!/usr/bin/env python2
-# @brief visualization of current vaccination status in Belgium. Per vaccination, more pixels are drawn of the country flag.
-# @detail Pixels are randomly sampled on every run.
+# @brief visualization of current vaccination status in Belgium, represented as a country flag
+# @detail More pixels are drawn as more people get their (first) vaccination. This is relative to the total population.
+# I.e., 1 pixel does not equal 1 vaccination. When the entire population is vaccinated, the flag will be full.
+# Pixels are randomly sampled on every run, so subsequent runs will look different
 # @author Robin Amsters
-# @bug All injections are taken into account, so second doses are counted double
+# @bug No known bugs
 
-# Data source: https://covid-vaccinatie.be/nl (sciensano does not allow excell download as far as I could tell)
-#  https://www.kaggle.com/gpreda/covid-world-vaccination-progress
-# Flag image source: https://en.wikipedia.org/wiki/Flag_of_Belgium#/media/File:Flag_of_Belgium.svg
 # Inspiration: https://www.reddit.com/r/dataisbeautiful/comments/jotgob/one_pixel_per_us_covid19_death_oc/
-
-# TODO animation
-# new idea: put all coordinates in a list. Randomly select one with random.sample, and remove elements
-# Idea: make it relative to the belgian map? Instead of flag? Could even use "gewest" data to make it more accurate
+# Data source: https://covid-vaccinatie.be/nl (sciensano does not allow excell download as far as I could tell)
+# Flag image source: https://en.wikipedia.org/wiki/Flag_of_Belgium#/media/File:Flag_of_Belgium.svg
 
 import cv2
 import copy
@@ -21,8 +17,8 @@ import random
 
 # Parameters
 inhabitants = 11492641  # https://statbel.fgov.be/nl/themas/bevolking/structuur-van-de-bevolking
-add_date = False # add date to flag
-font = cv2.FONT_HERSHEY_SIMPLEX
+add_date = True # Add date to flag
+font = cv2.FONT_HERSHEY_SIMPLEX # Font for date
 
 # Load data
 data = pd.read_excel("data/vaccins-toegediend.xls")
@@ -49,8 +45,11 @@ data_second_vaccination = pd.DataFrame(columns=data.columns)
 data_second_vaccination = data_second_vaccination.append(data.loc[index_second_vaccination, :])
 data_first_vaccination = data.drop(index_second_vaccination)
 
+# Get total number of vaccinations
+# Note: simply copying the total number of vaccinations would be a lot quicker, but part of the goal of this project is
+# for me to get more familiar with pandas.
 data_first_vaccination = data_first_vaccination.groupby(["Datum"]).sum() # Get total number of cases per day, groups municipality, age and sex together
-data_first_vaccination.index  = pd.to_datetime(data_first_vaccination.index, format="%d/%m/%Y")# After grouping date sorting is fucked, 2020 comes before 2021, fix it here
+data_first_vaccination.index  = pd.to_datetime(data_first_vaccination.index, format="%d/%m/%Y") # After grouping date sorting is messed up, 2020 comes before 2021, fix it here
 data_first_vaccination = data_first_vaccination.sort_index()
 data_cum = data_first_vaccination["Dosissen toegediend"].cumsum() # Get cumulative number of cases per day
 total_vaccinations = data_cum[-1] # Total number of cases in Belgium so far
@@ -69,12 +68,12 @@ pixels_x = pixels_to_draw[:,0]
 pixels_y = pixels_to_draw[:,1]
 
 # Draw flag
-flag_vaccination = copy.deepcopy(flag)
-flag_vaccination[:, :] = (255, 255, 255) # All white pixels of the right size
-flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # opencv images have y,x index for some reason
+flag_vaccination = copy.deepcopy(flag) # Make a copy of the original flag to get the size right
+flag_vaccination[:, :] = (255, 255, 255) # Make all pixels white
+flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # Draw original color for selected pixels. opencv images have y,x index for some reason
 final_date = data['Datum'][len(data['Datum'])-1]
-flag_vaccination = cv2.putText(flag_vaccination, final_date, (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture
-cv2.imshow("Vaccination flag", flag_vaccination)
+if add_date:
+    flag_vaccination = cv2.putText(flag_vaccination, final_date, (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture as text
 
 # Save results
 final_date_split = final_date.split("/")

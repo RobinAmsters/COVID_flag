@@ -1,7 +1,6 @@
-#!/usr/bin/env python2
-# @brief 
+# @brief
 # @author Robin Amsters
-# @bug No known bugs
+# @bug This file is in a completely broken state. Might come back to it later but the vaccination flag was more interesting
 
 # Data source: https://epistat.wiv-isp.be/covid/
 # Flag image source: https://en.wikipedia.org/wiki/Flag_of_Belgium#/media/File:Flag_of_Belgium.svg
@@ -11,7 +10,7 @@
 # TODO animation per day
 # TODO Figure out resolution, maybe make 1 pixel per inhabitant. Alternatively scale the pixels that are removed in proportion to the toal inhabitants
 
-# TODO SCALING IS FUCKED, come back later after vaccination flag works
+# TODO SCALING IS BAD, come back later after vaccination flag works
 
 # Idea: start from empty and make a flag of vaccinated ppl
 # Idea make it relative to the belgian map
