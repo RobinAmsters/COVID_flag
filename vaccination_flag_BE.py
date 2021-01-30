@@ -22,7 +22,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX # Font for date
 
 # Load data
 data = pd.read_excel("data/vaccination/vaccins-toegediend.xls")
-flag = cv2.imread("data/Flag_of_Belgium.png")
+flag = cv2.imread("data/flags/Flag_of_Belgium.png")
 height, width = flag.shape[:2]
 n_pixels = height*width
 
