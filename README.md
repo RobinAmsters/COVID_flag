@@ -18,9 +18,9 @@ Pixels are randomly sampled on every run, so subsequent runs will look different
 ## To generate a flag yourself
 
 1. download this repository
-
 2. download data [vaccination data](https://covid-vaccinatie.be/nl ) (flags are included because public domain) and store in data/vaccinations folder. 
 3. run vaccination_flag_BE.py
+   1. optionally set 'animation' to true to make a video of all the data
 
 
 
