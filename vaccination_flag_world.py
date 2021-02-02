@@ -27,7 +27,6 @@
 
 # Inspiration: https://www.reddit.com/r/dataisbeautiful/comments/jotgob/one_pixel_per_us_covid19_death_oc/
 
-
 # TODO format flags so they are all the same size. Maybe make some space around it?
 
 import cv2
@@ -41,12 +40,16 @@ import random
 add_date = False # add date to flag
 font = cv2.FONT_HERSHEY_SIMPLEX
 n_rows = 2 # Number of subplot rows
-n_cols = 4 # Number of subplot columns
+n_cols = 3 # Number of subplot columns
 
 # Country data
-countries_to_plot = ["Belgium", "Netherlands", "Germany", "United States", "Israel", "United Kingdom", "China", "France"]
-background = [(255,255,255), (0, 0, 0), (255,255,255), (0, 0, 0), (0, 0, 0), (0, 0, 0), (255,255,255), (0, 0, 0)] # What should the non-filled in pictures have as color, should be in same order as countries
-inhabitants = [11492641, 17469635, 83166711, 328239523, 9305020, 67886004, 1400050000, 67407000] # Total inhabitants per country, should be in same order as countries
+# countries_to_plot = ["Belgium", "Netherlands", "Germany", "United States", "Israel", "United Kingdom", "China", "France"]
+#background = [(255,255,255), (0, 0, 0), (255,255,255), (0, 0, 0), (0, 0, 0), (0, 0, 0), (255,255,255), (0, 0, 0)] # What should the non-filled in pictures have as color, should be in same order as countries
+# inhabitants = [11492641, 17469635, 83166711, 328239523, 9305020, 67886004, 1400050000, 67407000] # Total inhabitants per country, should be in same order as countries
+
+countries_to_plot = [ "United States", "Israel", "United Kingdom", "China", "India", "Russia"]
+inhabitants = [328239523, 9305020, 67886004, 1400050000, 1352642280, 146238185] # Total inhabitants per country, should be in same order as countries
+
 
 # Load data
 data = pd.read_csv("data/vaccination/country_vaccinations.csv")
@@ -79,7 +82,7 @@ for i in range(len(countries_to_plot)):
 
     # Draw flag
     flag_vaccination = copy.deepcopy(flag)
-    flag_vaccination[:, :] = background[i]
+    flag_vaccination[:, :] = (166, 166, 166)
     flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # opencv images have y,x index for some reason
     final_date = data_country["date"][vaccination_index]
 
