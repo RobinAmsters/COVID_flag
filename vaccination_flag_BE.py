@@ -25,42 +25,25 @@ animation = True # if set to false, only the most recent flag will be drawn
 FPS = 3 # for animation if set to true
 
 # Load data
-data = pd.read_excel("data/vaccination/vaccins-toegediend.xls")
+data = pd.read_excel("data/vaccination/vaccination.xls", index_col="Date")
 flag = cv2.imread("data/flags/Flag_of_Belgium.png")
 height, width = flag.shape[:2]
 n_pixels = height*width
 scaling = inhabitants / n_pixels  # Draw pixels relative to population. Flag should be full when the entire population is vaccinated
-final_date = data['Datum'][len(data['Datum']) - 1]
+final_date = data.index[0] # Newest entry is at the top of the file
 final_date_split = final_date.split("/")
-final_date_underscore = final_date_split[0] + "_" + final_date_split[1] + "_" + final_date_split[
-    2]  # Seperate date month and year by underscores to propoerly save file
-
-# Format data
-# If a date has the same 'gewest' twice, the second entry are second vaccinations. Don't want these in the flag for now
-previous_date = ""
-previous_gewest = ""
-index_second_vaccination = np.array([])
-for index, row in data.iterrows():
-    current_date = row['Datum']
-    current_gewest = row['Gewest']
-
-    if (current_date == previous_date and current_gewest == previous_gewest):
-        index_second_vaccination = np.append(index_second_vaccination, index)
-    previous_date = current_date
-    previous_gewest = current_gewest
+final_date = final_date_split[0] + "_" + final_date_split[1] + "_" + final_date_split[
+    2]  # Separate date month and year by underscores to properly save file
 
 # Split data in first and second round of vaccinations
-data_second_vaccination = pd.DataFrame(columns=data.columns)
-data_second_vaccination = data_second_vaccination.append(data.loc[index_second_vaccination, :])
-data_first_vaccination = data.drop(index_second_vaccination)
+data_first_vaccination = data["1st dose"]
+data_second_vaccination = data["2nd dose"]
 
-# Get total number of vaccinations
-# Note: simply copying the total number of vaccinations would be a lot quicker, but part of the goal of this project is
-# for me to get more familiar with pandas.
-data_first_vaccination = data_first_vaccination.groupby(["Datum"]).sum() # Get total number of cases per day, groups municipality, age and sex together
+# Get cumulative number of vaccinations
+data_first_vaccination = data_first_vaccination.groupby(["Date"]).sum() # Get total number of cases per day, groups municipality, age and sex together
 data_first_vaccination.index  = pd.to_datetime(data_first_vaccination.index, format="%d/%m/%Y") # After grouping date sorting is messed up, 2020 comes before 2021, fix it here
 data_first_vaccination = data_first_vaccination.sort_index()
-data_cum = data_first_vaccination["Dosissen toegediend"].cumsum() # Get cumulative number of cases per day
+data_cum = data_first_vaccination.cumsum() # Get cumulative number of cases per day
 
 # Prepare pixel grid
 xvalues = np.arange(width)
@@ -71,7 +54,7 @@ pixels = np.dstack([xx, yy]).reshape(-1, 2)
 if animation:
     # Start video writer
     fourcc = cv2.VideoWriter_fourcc(*'MP42')
-    video = cv2.VideoWriter("results/flag_vaccination_" + final_date_underscore + ".avi", fourcc, float(FPS), (width, height))
+    video = cv2.VideoWriter("results/flag_vaccination_" + final_date + ".avi", fourcc, float(FPS), (width, height))
 
     # flatten image indexes for easier sampling of frames (removal of sampled pixels)
     xx = xx.flatten()
@@ -82,9 +65,8 @@ if animation:
     pixels_x = np.array([], dtype=int)
     pixels_y = np.array([], dtype=int)
 
-    for index, row in data_first_vaccination.iterrows(): # make a flag for every dag in the data
+    for index, vaccinations_i in data_first_vaccination.iteritems(): # make a flag for every dag in the data
         date_i = index.strftime("%d-%m-%Y")
-        vaccinations_i = row['Dosissen toegediend']
 
         # Prepare flag
         flag_vaccination = copy.deepcopy(flag)  # Make a copy of the original flag to get the size right
@@ -132,7 +114,7 @@ else:
     # Draw flag
     flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # Draw original color for selected pixels. opencv images have y,x index for some reason
     if add_date:
-        flag_vaccination = cv2.putText(flag_vaccination, final_date, (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture as text
+        flag_vaccination = cv2.putText(flag_vaccination, data.index[0], (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture as text
 
     # Save results
-    cv2.imwrite("results/flag_vaccination_" + final_date_underscore + ".png", flag_vaccination)
+    cv2.imwrite("results/flag_vaccination_" + final_date + ".png", flag_vaccination)
