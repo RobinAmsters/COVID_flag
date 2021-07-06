@@ -21,26 +21,27 @@ import random
 inhabitants = 11492641  # Estimate at Januari 2020: https://statbel.fgov.be/nl/themas/bevolking/structuur-van-de-bevolking
 add_date = True # Add date to flag
 font = cv2.FONT_HERSHEY_SIMPLEX # Font for date
-animation = True # if set to false, only the most recent flag will be drawn
+animation = False # if set to false, only the most recent flag will be drawn
 FPS = 3 # for animation if set to true
 
 # Load data
-data = pd.read_excel("data/vaccination/vaccination.xls", index_col="Date")
+data = pd.read_excel("data/vaccinations/covid-vaccinatie.nl.xlsx", index_col="Datum")
 flag = cv2.imread("data/flags/Flag_of_Belgium.png")
 height, width = flag.shape[:2]
 n_pixels = height*width
 scaling = inhabitants / n_pixels  # Draw pixels relative to population. Flag should be full when the entire population is vaccinated
-final_date = data.index[0] # Newest entry is at the top of the file
+final_date = data.index[-1] # Newest entry is at the top of the file
 final_date_split = final_date.split("/")
 final_date = final_date_split[0] + "_" + final_date_split[1] + "_" + final_date_split[
     2]  # Separate date month and year by underscores to properly save file
 
 # Split data in first and second round of vaccinations
-data_first_vaccination = data["1st dose"]
-data_second_vaccination = data["2nd dose"]
+data_first_vaccination = data["1e dosis"] 
+data_first_vaccination = data_first_vaccination.add(data["Unieke dosis"], fill_value=0)
+data_second_vaccination = data["2e dosis"]
 
 # Get cumulative number of vaccinations
-data_first_vaccination = data_first_vaccination.groupby(["Date"]).sum() # Get total number of cases per day, groups municipality, age and sex together
+data_first_vaccination = data_first_vaccination.groupby(["Datum"]).sum() # Get total number of cases per day, groups municipality, age and sex together
 data_first_vaccination.index  = pd.to_datetime(data_first_vaccination.index, format="%d/%m/%Y") # After grouping date sorting is messed up, 2020 comes before 2021, fix it here
 data_first_vaccination = data_first_vaccination.sort_index()
 data_cum = data_first_vaccination.cumsum() # Get cumulative number of cases per day
@@ -114,7 +115,7 @@ else:
     # Draw flag
     flag_vaccination[pixels_y, pixels_x] = flag[pixels_y, pixels_x] # Draw original color for selected pixels. opencv images have y,x index for some reason
     if add_date:
-        flag_vaccination = cv2.putText(flag_vaccination, data.index[0], (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture as text
+        flag_vaccination = cv2.putText(flag_vaccination, final_date, (0, 100), font, 3, (0, 255, 0), 2, cv2.LINE_AA)  # Add date to picture as text
 
     # Save results
     cv2.imwrite("results/flag_vaccination_" + final_date + ".png", flag_vaccination)
